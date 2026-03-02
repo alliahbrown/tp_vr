@@ -76,7 +76,7 @@ let controller1, controller2
 
 let reticle: Object3D<Object3DEventMap>;
 
-let hitTestSource = null;
+let hitTestSource: XRHitTestSource | null = null;
 let hitTestSourceRequested = false;
 
 
@@ -142,7 +142,77 @@ const init = () => {
   //
 
   window.addEventListener('resize', onWindowResize);
+  function onWindowResize() {
 
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+  }
+
+  //
+
+  function animate(timestamp: any, frame: { getHitTestResults: (arg0: XRHitTestSource) => any; }) {
+
+    if (frame) {
+
+      const referenceSpace = renderer.xr.getReferenceSpace();
+      const session = renderer.xr.getSession();
+
+      if (hitTestSourceRequested === false) {
+        if (session) {
+
+
+          session.requestReferenceSpace('viewer').then(function (referenceSpace) {
+
+            session.requestHitTestSource?.({ space: referenceSpace })?.then(function (source) {
+
+              hitTestSource = source;
+
+            });
+
+          });
+
+          session.addEventListener('end', function () {
+
+            hitTestSourceRequested = false;
+            hitTestSource = null;
+
+          });
+
+          hitTestSourceRequested = true;
+
+        }
+
+
+
+      }
+
+      if (hitTestSource) {
+
+        const hitTestResults = frame.getHitTestResults(hitTestSource);
+
+        if (hitTestResults.length) {
+
+          const hit = hitTestResults[0];
+
+          reticle.visible = true;
+          reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
+
+        } else {
+
+          reticle.visible = false;
+
+        }
+
+      }
+
+    }
+
+    renderer.render(scene, camera);
+
+  }
 
 }
 
@@ -188,7 +258,7 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 
 }
-function animate(time: number, frame: XRFrame): void {
+function animate(_time: number, _frame: XRFrame): void {
   throw new Error('Function not implemented.');
 }
 
