@@ -15,6 +15,7 @@ import {
   CylinderGeometry,
   HemisphereLight,
   Mesh,
+  Vector3,
   MeshNormalMaterial,
   MeshPhongMaterial,
   PerspectiveCamera,
@@ -84,6 +85,10 @@ function loadData() {
   new GLTFLoader()
     .setPath('assets/models/')
     .load('v3.glb', gltfReader);
+
+  new GLTFLoader()
+    .setPath('assets/models/')
+    .load('vinyl_player.glb', gltfReader);
 }
 
 
@@ -162,8 +167,52 @@ const init = () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
 
   }
+  /////////////////////////////////////////////////
 
-  //
+
+
+  const targets = { helix: [], grid: [] };
+  const objects = [];
+  const vector = new Vector3();
+
+  const periodic_table = [
+    'H', 'Hydrogen', '1.00794', 1, 1,
+    'He', 'Helium', '4.002602', 18, 1,
+    'Li', 'Lithium', '6.941', 1, 2,
+    'Be', 'Beryllium', '9.012182', 2, 2,
+    'B', 'Boron', '10.811', 13, 2,
+    'C', 'Carbon', '12.0107', 14, 2,
+    'N', 'Nitrogen', '14.0067', 15, 2,
+    'O', 'Oxygen', '15.9994', 16, 2,
+    'F', 'Fluorine', '18.9984032', 17, 2
+  ];
+
+
+  for (let i = 0, l = objects.length; i < l; i++) {
+
+    const theta = i * 0.175 + Math.PI;
+    const y = - (i * 8) + 450;
+
+    const object = new Object3D();
+
+    object.position.setFromCylindricalCoords(900, theta, y);
+
+    vector.x = object.position.x * 2;
+    vector.y = object.position.y;
+    vector.z = object.position.z * 2;
+
+    object.lookAt(vector);
+
+    targets.helix.push(object);
+
+  }
+
+
+
+
+
+  ///////////////////////////////////////
+
 
   function animate(timestamp: any, frame: { getHitTestResults: (arg0: XRHitTestSource) => any; }) {
 
@@ -204,6 +253,8 @@ const init = () => {
       if (hitTestSource) {
 
         const hitTestResults = frame.getHitTestResults(hitTestSource);
+
+
 
         if (hitTestResults.length) {
 
