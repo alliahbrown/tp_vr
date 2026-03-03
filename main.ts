@@ -23,8 +23,10 @@ import {
   RingGeometry,
   MeshBasicMaterial,
   Object3D,
-  Object3DEventMap
+  Object3DEventMap,
 } from 'three';
+
+import { GLTF, GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 // XR Emulator
 import { DevUI } from '@iwer/devui';
@@ -56,9 +58,7 @@ import {
   OrbitControls
 } from 'three/addons/controls/OrbitControls.js';
 
-import {
-  GLTFLoader
-} from 'three/addons/loaders/GLTFLoader.js';
+
 import { XRController } from 'iwer/lib/device/XRController';
 import { ARButton } from 'three/examples/jsm/Addons.js';
 
@@ -76,23 +76,38 @@ let controller1, controller2
 
 let reticle: Object3D<Object3DEventMap>;
 
+let vinyl_player: Object3D
 let hitTestSource: XRHitTestSource | null = null;
 let hitTestSourceRequested = false;
 
+function loadData() {
+  new GLTFLoader()
+    .setPath('assets/models/')
+    .load('v3.glb', gltfReader);
+}
+
+
+function gltfReader(gltf: GLTF) {
+  if (!gltf.scene) { console.log("Load FAILED."); return; }
+  vinyl_player = gltf.scene;
+  console.log('vinyl_player loaded:', vinyl_player);
+}
+
 
 const init = () => {
+
   container = document.createElement('div');
   document.body.appendChild(container);
 
   scene = new Scene();
-
+  loadData();
   camera = new PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
 
   const light = new HemisphereLight(0xffffff, 0xbbbbff, 3);
   light.position.set(0.5, 1, 0.25);
   scene.add(light);
 
-  //
+
 
   renderer = new WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -107,22 +122,19 @@ const init = () => {
 
   //
 
-  const geometry = new CylinderGeometry(0.1, 0.1, 0.2, 32).translate(0, 0.1, 0);
+  const geometry = new BoxGeometry(0.1, 0.1, 0.2, 32).translate(0, 0.1, 0);
 
   function onSelect() {
-
-    if (reticle.visible) {
-
-      const material = new MeshPhongMaterial({ color: 0xffffff * Math.random() });
-      const mesh = new Mesh(geometry, material);
-      reticle.matrix.decompose(mesh.position, mesh.quaternion, mesh.scale);
-      mesh.scale.y = Math.random() * 2 + 1;
-      scene.add(mesh);
-
+    if (reticle.visible && vinyl_player) {
+      reticle.matrix.decompose(
+        vinyl_player.position,
+        vinyl_player.quaternion,
+        vinyl_player.scale
+      );
+      vinyl_player.scale.setScalar(0.5);
+      scene.add(vinyl_player);
     }
-
   }
-
   controller1 = renderer.xr.getController(0);
   controller1.addEventListener('select', onSelect);
   scene.add(controller1);
@@ -217,36 +229,6 @@ const init = () => {
 }
 
 init();
-
-//
-
-/*
-function loadData() {
-  new GLTFLoader()
-    .setPath('assets/models/')
-    .load('test.glb', gltfReader);
-}
-
-
-function gltfReader(gltf) {
-  let testModel = null;
-
-  testModel = gltf.scene;
-
-  if (testModel != null) {
-    console.log("Model loaded:  " + testModel);
-    scene.add(gltf.scene);
-  } else {
-    console.log("Load FAILED.  ");
-  }
-}
-
-loadData();
-*/
-
-
-// camera.position.z = 3;
-
 
 
 
